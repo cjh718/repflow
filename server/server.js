@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import sqlite3 from 'sqlite3';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import dotenv from 'dotenv';
@@ -16,34 +16,26 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors({
-  origin: '*'
-}));
+app.use(cors());
 app.use(express.json());
 
-console.log('Starting server...');
+// Simple JSON file database
+const DB_FILE = join(__dirname, 'database.json');
 
-// Connect to database
-const db = new sqlite3.Database(join(__dirname, 'repflow.db'));
+// Initialize database file if it doesn't exist
+if (!fs.existsSync(DB_FILE)) {
+  fs.writeFileSync(DB_FILE, JSON.stringify({ users: [] }));
+}
 
-// Create users table
-db.run(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    name TEXT,
-    is_premium INTEGER DEFAULT 0,
-    streak_days INTEGER DEFAULT 0,
-    completed_workouts INTEGER DEFAULT 0
-  )
-`, (err) => {
-  if (err) {
-    console.error('Table creation error:', err.message);
-  } else {
-    console.log('Database ready');
-  }
-});
+// Helper functions
+const readDB = () => {
+  const data = fs.readFileSync(DB_FILE);
+  return JSON.parse(data);
+};
+
+const writeDB = (data) => {
+  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+};
 
 // Test endpoint
 app.get('/test', (req, res) => {
@@ -52,7 +44,7 @@ app.get('/test', (req, res) => {
 
 // Signup endpoint
 app.post('/signup', async (req, res) => {
-  console.log('Signup request received');
+  console.log('Signup request:', req.body);
   const { email, password, name } = req.body;
   
   if (!email || !password) {
@@ -63,72 +55,74 @@ app.post('/signup', async (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 6 characters' });
   }
   
-  // Check if user exists
-  db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-    if (err) {
-      console.error('Query error:', err.message);
-      return res.status(500).json({ error: 'Database error' });
-    }
+  try {
+    const db = readDB();
     
-    if (user) {
+    // Check if user exists
+    if (db.users.find(u => u.email === email)) {
       return res.status(400).json({ error: 'User already exists' });
     }
     
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
     
-    // Insert user
-    db.run(
-      'INSERT INTO users (email, password, name) VALUES (?, ?, ?)',
-      [email, hashedPassword, name || email.split('@')[0]],
-      function(err) {
-        if (err) {
-          console.error('Insert error:', err.message);
-          return res.status(500).json({ error: 'Failed to create user' });
-        }
-        
-        const token = jwt.sign({ id: this.lastID, email }, 'secretkey123');
-        
-        res.json({
-          success: true,
-          token,
-          user: {
-            email,
-            name: name || email.split('@')[0],
-            isPremium: false,
-            streakDays: 0,
-            completedWorkouts: 0
-          }
-        });
+    // Create new user
+    const newUser = {
+      id: Date.now(),
+      email,
+      password: hashedPassword,
+      name: name || email.split('@')[0],
+      isPremium: false,
+      streakDays: 0,
+      completedWorkouts: 0
+    };
+    
+    db.users.push(newUser);
+    writeDB(db);
+    
+    // Generate token
+    const token = jwt.sign({ id: newUser.id, email }, process.env.JWT_SECRET || 'secretkey123');
+    
+    res.json({
+      success: true,
+      token,
+      user: {
+        email: newUser.email,
+        name: newUser.name,
+        isPremium: newUser.isPremium,
+        streakDays: newUser.streakDays,
+        completedWorkouts: newUser.completedWorkouts
       }
-    );
-  });
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Login endpoint
 app.post('/login', async (req, res) => {
-  console.log('Login request received');
+  console.log('Login request:', req.body);
   const { email, password } = req.body;
   
   if (!email || !password) {
     return res.status(400).json({ error: 'Email and password required' });
   }
   
-  db.get('SELECT * FROM users WHERE email = ?', [email], async (err, user) => {
-    if (err) {
-      return res.status(500).json({ error: 'Database error' });
-    }
+  try {
+    const db = readDB();
+    const user = db.users.find(u => u.email === email);
     
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
     
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ error: 'Invalid email or password' });
     }
     
-    const token = jwt.sign({ id: user.id, email }, 'secretkey123');
+    const token = jwt.sign({ id: user.id, email }, process.env.JWT_SECRET || 'secretkey123');
     
     res.json({
       success: true,
@@ -136,15 +130,103 @@ app.post('/login', async (req, res) => {
       user: {
         email: user.email,
         name: user.name,
-        isPremium: user.is_premium === 1,
-        streakDays: user.streak_days,
-        completedWorkouts: user.completed_workouts
+        isPremium: user.isPremium,
+        streakDays: user.streakDays,
+        completedWorkouts: user.completedWorkouts
       }
     });
-  });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-// Start server
+// Get current user
+app.get('/me', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey123');
+    const db = readDB();
+    const user = db.users.find(u => u.id === decoded.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      isPremium: user.isPremium,
+      streakDays: user.streakDays,
+      completedWorkouts: user.completedWorkouts
+    });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// Complete workout
+app.post('/workouts/complete', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey123');
+    const db = readDB();
+    const userIndex = db.users.findIndex(u => u.id === decoded.id);
+    
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    db.users[userIndex].completedWorkouts += 1;
+    db.users[userIndex].streakDays += 1;
+    writeDB(db);
+    
+    res.json({
+      streakDays: db.users[userIndex].streakDays,
+      completedWorkouts: db.users[userIndex].completedWorkouts
+    });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
+// Upgrade to premium
+app.post('/premium/upgrade', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ error: 'No token provided' });
+  }
+  
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey123');
+    const db = readDB();
+    const userIndex = db.users.findIndex(u => u.id === decoded.id);
+    
+    if (userIndex === -1) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    db.users[userIndex].isPremium = true;
+    writeDB(db);
+    
+    res.json({ success: true, isPremium: true });
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
   console.log(`✅ Test: http://localhost:${PORT}/test`);
