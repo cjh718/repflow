@@ -518,7 +518,7 @@ function OnboardingScreen({ onGetStarted }) {
 
         {/* Stat pills */}
         <div style={{ display: "flex", gap: 10, marginBottom: 40, animation: "fadeUp 0.5s 0.1s ease forwards", opacity: 0 }}>
-          {[["100+", "Exercises"], ["50+", "Workouts"], ["3", "Levels"]].map(([v, l]) => (
+          {[["200+", "Exercises"], ["50+", "Workouts"], ["3", "Levels"]].map(([v, l]) => (
             <div key={l} style={{
               flex: 1, padding: "14px 8px", background: C.card, borderRadius: 14,
               border: `1px solid ${C.border}`, textAlign: "center",
@@ -565,23 +565,13 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
             )}
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-            {!isPremium && (
-              <button onClick={onPremium} style={{
-                background: `linear-gradient(135deg, ${C.premium} 0%, #FF8C00 100%)`,
-                border: "none", borderRadius: 10, padding: "6px 12px",
-                fontFamily: FONT.body, fontSize: 11, fontWeight: 700, color: "#000",
-                cursor: "pointer", letterSpacing: "0.05em",
-              }}>PRO ⭐</button>
-            )}
-            <button onClick={onProfile} style={{
-              width: 40, height: 40, borderRadius: 12,
-              background: C.card, border: `1px solid ${C.border}`,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", fontSize: 18,
-            }}>👤</button>
-          </div>
-        </div>
-      </div>
+  <button onClick={onProfile} style={{
+    width: 40, height: 40, borderRadius: 12,
+    background: C.card, border: `1px solid ${C.border}`,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", fontSize: 18,
+  }}>👤</button>
+</div>
 
       <div style={{ padding: "0 24px 100px" }}>
         {/* Streak Banner */}
