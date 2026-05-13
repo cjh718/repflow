@@ -25,7 +25,7 @@ const FONT = {
 };
 
 // API Configuration
-const API_URL = 'http://localhost:5001';
+const API_URL = 'https://repflow-server.onrender.com';
 
 // ─── Workout Data ─────────────────────────────────────────────────────────────
 const WORKOUT_DB = {
