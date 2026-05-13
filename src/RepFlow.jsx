@@ -149,7 +149,6 @@ function CircularTimer({ value, max, color, size = 220, strokeW = 12 }) {
   const circ = 2 * Math.PI * r;
   const progress = max > 0 ? (value / max) : 0;
   const offset = circ * (1 - progress);
-  const pct = Math.round(progress * 100);
 
   return (
     <div style={{ position: "relative", width: size, height: size }}>
@@ -209,7 +208,7 @@ function Badge({ label, color = C.accent, small }) {
 
 // ─── Screen: Splash ───────────────────────────────────────────────────────────
 function SplashScreen({ onDone }) {
-  useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, []);
+  useEffect(() => { const t = setTimeout(onDone, 2200); return () => clearTimeout(t); }, [onDone]);
   return (
     <div style={{
       ...screen(), background: `radial-gradient(ellipse at 30% 20%, ${C.accent}18 0%, transparent 60%), ${C.bg}`,
@@ -261,9 +260,7 @@ function LoginScreen({ onLogin, onSwitchToSignup }) {
     setError("");
     setLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
-      // Simple validation - in real app, this would be an API call
       if (email && password && password.length >= 6) {
         const userData = { email, name: email.split('@')[0] };
         localStorage.setItem("repflow_user", JSON.stringify(userData));
@@ -304,7 +301,6 @@ function LoginScreen({ onLogin, onSwitchToSignup }) {
                 background: C.card, border: `1px solid ${C.border}`,
                 borderRadius: 14, color: C.white, fontFamily: FONT.body,
                 fontSize: 16, outline: "none",
-                transition: "all 0.2s ease",
               }}
               required
             />
@@ -378,7 +374,6 @@ function SignupScreen({ onSignup, onSwitchToLogin }) {
     
     setLoading(true);
     
-    // Simulate API call
     setTimeout(() => {
       const userData = { email, name: name || email.split('@')[0] };
       localStorage.setItem("repflow_user", JSON.stringify(userData));
@@ -502,7 +497,6 @@ function OnboardingScreen({ onGetStarted }) {
                    radial-gradient(ellipse at 20% 80%, ${C.accent}12 0%, transparent 50%), ${C.bg}`,
       display: "flex", flexDirection: "column", padding: "0 24px 40px",
     }}>
-      {/* Hero */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 60 }}>
         <div style={{ animation: "fadeUp 0.5s ease forwards" }}>
           <div style={{ fontFamily: FONT.display, fontSize: 13, letterSpacing: "0.4em", color: C.accent, marginBottom: 16, fontWeight: 700 }}>
@@ -516,7 +510,6 @@ function OnboardingScreen({ onGetStarted }) {
           </div>
         </div>
 
-        {/* Stat pills */}
         <div style={{ display: "flex", gap: 10, marginBottom: 40, animation: "fadeUp 0.5s 0.1s ease forwards", opacity: 0 }}>
           {[["200+", "Exercises"], ["50+", "Workouts"], ["3", "Levels"]].map(([v, l]) => (
             <div key={l} style={{
@@ -530,7 +523,6 @@ function OnboardingScreen({ onGetStarted }) {
         </div>
       </div>
 
-      {/* CTA */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeUp 0.5s 0.2s ease forwards", opacity: 0 }}>
         <button onClick={onGetStarted} style={btnPrimary()}>GET STARTED</button>
       </div>
@@ -542,11 +534,10 @@ function OnboardingScreen({ onGetStarted }) {
 function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDays, completedWorkouts, user, onLogout }) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
-  const activeDay = new Date().getDay(); // 0 = Sun
+  const activeDay = new Date().getDay();
 
   return (
     <div style={{ ...screen(), overflowY: "auto" }}>
-      {/* Header */}
       <div style={{
         padding: "52px 24px 20px",
         background: `linear-gradient(180deg, ${C.surface} 0%, transparent 100%)`,
@@ -565,16 +556,17 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
             )}
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-  <button onClick={onProfile} style={{
-    width: 40, height: 40, borderRadius: 12,
-    background: C.card, border: `1px solid ${C.border}`,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", fontSize: 18,
-  }}>👤</button>
-</div>
+            <button onClick={onProfile} style={{
+              width: 40, height: 40, borderRadius: 12,
+              background: C.card, border: `1px solid ${C.border}`,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: 18,
+            }}>👤</button>
+          </div>
+        </div>
+      </div>
 
       <div style={{ padding: "0 24px 100px" }}>
-        {/* Streak Banner */}
         <div style={{
           background: `linear-gradient(135deg, ${C.accent}18 0%, transparent 100%)`,
           border: `1px solid ${C.accent}30`, borderRadius: 20, padding: "20px",
@@ -596,11 +588,10 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
           </div>
         </div>
 
-        {/* Week View */}
         <div style={{ marginBottom: 28 }}>
           <div style={{ display: "flex", gap: 8, justifyContent: "space-between" }}>
             {weekDays.map((d, i) => {
-              const idx = i === 6 ? 0 : i + 1; // adjust for Sun=0
+              const idx = i === 6 ? 0 : i + 1;
               const isToday = idx === activeDay;
               const done = i < (activeDay - 1 + 7) % 7 && streakDays > i;
               return (
@@ -619,7 +610,6 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
           </div>
         </div>
 
-        {/* Quick Start */}
         <div style={{ marginBottom: 24 }}>
           <SectionLabel>QUICK START</SectionLabel>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
@@ -649,7 +639,6 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
           </div>
         </div>
 
-        {/* Categories */}
         <SectionLabel>ALL WORKOUTS</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 12 }}>
           {CATEGORIES.map((cat) => (
@@ -671,7 +660,6 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
           ))}
         </div>
 
-        {/* Stats row */}
         <div style={{ marginTop: 28 }}>
           <SectionLabel>YOUR PROGRESS</SectionLabel>
           <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
@@ -707,14 +695,12 @@ function WorkoutSetupScreen({ initial, onBack, onBegin }) {
   return (
     <div style={{ ...screen(), overflowY: "auto" }}>
       <div style={{ padding: "52px 24px 100px" }}>
-        {/* Back */}
         <button onClick={onBack} style={backBtn()}>← Back</button>
 
         <div style={{ fontFamily: FONT.display, fontSize: 36, fontWeight: 900, color: C.white, marginBottom: 24, letterSpacing: "-0.5px" }}>
           CUSTOMIZE<br /><span style={{ color: C.accent }}>WORKOUT</span>
         </div>
 
-        {/* Level */}
         <SectionLabel>DIFFICULTY LEVEL</SectionLabel>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 12, marginBottom: 24 }}>
           {LEVELS.map(l => (
@@ -735,7 +721,6 @@ function WorkoutSetupScreen({ initial, onBack, onBegin }) {
           ))}
         </div>
 
-        {/* Category */}
         <SectionLabel>WORKOUT TYPE</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 12, marginBottom: 24 }}>
           {CATEGORIES.map(c => (
@@ -754,7 +739,6 @@ function WorkoutSetupScreen({ initial, onBack, onBegin }) {
           ))}
         </div>
 
-        {/* Duration */}
         <SectionLabel>DURATION</SectionLabel>
         <div style={{ display: "flex", gap: 10, marginTop: 12, marginBottom: 32 }}>
           {DURATIONS.map(d => (
@@ -771,7 +755,6 @@ function WorkoutSetupScreen({ initial, onBack, onBegin }) {
           ))}
         </div>
 
-        {/* Preview */}
         <div style={{
           background: C.card, border: `1px solid ${C.border}`, borderRadius: 20, padding: "20px",
           marginBottom: 24,
@@ -812,7 +795,7 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
   const { exercises } = config;
   const [exIdx, setExIdx] = useState(0);
   const [round, setRound] = useState(1);
-  const [phase, setPhase] = useState("work"); // "work" | "rest" | "countdown"
+  const [phase, setPhase] = useState("work");
   const [timeLeft, setTimeLeft] = useState(3);
   const [paused, setPaused] = useState(false);
   const [finished, setFinished] = useState(false);
@@ -823,7 +806,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
   const workDuration = ex?.duration || 30;
   const restDuration = ex?.rest || 15;
 
-  // Countdown 3-2-1 before start
   useEffect(() => {
     if (countdownDone) return;
     const t = setInterval(() => {
@@ -833,9 +815,8 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
       });
     }, 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [countdownDone, workDuration]);
 
-  // Main timer
   useEffect(() => {
     if (!countdownDone || paused || finished) return;
     const t = setInterval(() => {
@@ -857,12 +838,11 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         setPhase("rest");
         setTimeLeft(restDuration);
       } else {
-        // exercise done — move to next or finish
         if (exIdx + 1 < totalExercises) {
           if (isPremium) {
             advanceExercise();
           } else {
-            setPhase("manual"); // free user waits
+            setPhase("manual");
           }
         } else {
           setFinished(true);
@@ -892,7 +872,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
   const timerMax = phase === "work" ? workDuration : phase === "rest" ? restDuration : 3;
   const timerColor = isResting ? "#5AC8FA" : phase === "manual" ? C.premium : C.accent;
 
-  // Completion screen
   if (finished) {
     return (
       <div style={{
@@ -924,7 +903,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
 
   return (
     <div style={{ ...screen(), background: C.bg, display: "flex", flexDirection: "column" }}>
-      {/* Top bar */}
       <div style={{ padding: "52px 20px 12px", display: "flex", alignItems: "center", gap: 12 }}>
         <button onClick={onBack} style={{ ...iconBtn(), fontSize: 16 }}>✕</button>
         <div style={{ flex: 1 }}>
@@ -935,7 +913,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         </div>
       </div>
 
-      {/* Phase label */}
       <div style={{ textAlign: "center", padding: "8px 0 4px" }}>
         {!countdownDone ? (
           <Badge label="GET READY" color={C.premium} />
@@ -948,7 +925,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         )}
       </div>
 
-      {/* Exercise name */}
       <div style={{ textAlign: "center", padding: "12px 24px 0" }}>
         <div style={{ fontFamily: FONT.display, fontSize: 32, fontWeight: 900, color: C.white, letterSpacing: "-0.5px" }}>
           {!countdownDone ? "GET READY" : isResting ? "REST" : ex.name}
@@ -958,7 +934,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         )}
       </div>
 
-      {/* Animation + Timer */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 24, padding: "8px 0" }}>
         <ExerciseAnimation exercise={ex} isResting={isResting} />
         <CircularTimer value={timeLeft} max={timerMax} color={timerColor} />
@@ -969,7 +944,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         )}
       </div>
 
-      {/* Music bar */}
       <div style={{
         margin: "0 20px 12px",
         background: C.card, border: `1px solid ${C.border}`, borderRadius: 16,
@@ -986,7 +960,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         {!isPremium && <Badge label="FREE" small color={C.grey2} />}
       </div>
 
-      {/* Controls */}
       <div style={{ padding: "0 20px 40px", display: "flex", gap: 12 }}>
         <button onClick={() => setPaused(p => !p)} style={{
           flex: 1, padding: "16px 0",
@@ -1017,7 +990,6 @@ function ActiveWorkoutScreen({ config, isPremium, onComplete, onBack }) {
         )}
       </div>
 
-      {/* Free user nudge */}
       {!isPremium && isManual && (
         <div style={{
           margin: "-20px 20px 30px",
@@ -1054,7 +1026,6 @@ function PremiumScreen({ onBack, onUpgrade }) {
       <div style={{ padding: "52px 24px 100px" }}>
         <button onClick={onBack} style={backBtn()}>← Back</button>
 
-        {/* Hero */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{ fontSize: 56, marginBottom: 12 }}>⭐</div>
           <div style={{ fontFamily: FONT.display, fontSize: 42, fontWeight: 900, color: C.white, letterSpacing: "-1px" }}>
@@ -1065,7 +1036,6 @@ function PremiumScreen({ onBack, onUpgrade }) {
           </div>
         </div>
 
-        {/* Plans */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
           {[
             { key: "annual", label: "Annual", price: "SGD 39.98", sub: "/ year · SGD 3.33/mo", save: "SAVE 33%" },
@@ -1091,7 +1061,6 @@ function PremiumScreen({ onBack, onUpgrade }) {
           ))}
         </div>
 
-        {/* Features */}
         <div style={{ background: C.card, borderRadius: 20, padding: "20px", border: `1px solid ${C.border}`, marginBottom: 28 }}>
           {features.map(([e, f], i) => (
             <div key={i} style={{
@@ -1142,7 +1111,6 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
       <div style={{ padding: "52px 24px 100px" }}>
         <button onClick={onBack} style={backBtn()}>← Back</button>
 
-        {/* Avatar */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           <div style={{
             width: 88, height: 88, borderRadius: 26,
@@ -1168,7 +1136,6 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
           )}
         </div>
 
-        {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 28 }}>
           {[
             { label: "Streak", value: `${streakDays}🔥`, sub: "days" },
@@ -1186,7 +1153,6 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
           ))}
         </div>
 
-        {/* Badges */}
         <SectionLabel>ACHIEVEMENT BADGES</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginTop: 12 }}>
           {badges.map((b, i) => (
@@ -1204,7 +1170,6 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
           ))}
         </div>
 
-        {/* Logout Button */}
         <div style={{ marginTop: 28 }}>
           <button onClick={handleLogout} style={{
             width: "100%", padding: "16px 0",
@@ -1217,7 +1182,6 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
           </button>
         </div>
 
-        {/* Settings */}
         <div style={{ marginTop: 28 }}>
           <SectionLabel>SETTINGS</SectionLabel>
           <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 1 }}>
@@ -1323,16 +1287,15 @@ function iconBtn() {
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 export default function RepFlowApp() {
-  const [appScreen, setAppScreen] = useState("splash"); // splash | onboarding | login | signup | main
+  const [appScreen, setAppScreen] = useState("splash");
   const [tab, setTab] = useState("home");
-  const [workoutConfig, setWorkoutConfig] = useState(null); // for setup screen
-  const [activeWorkout, setActiveWorkout] = useState(null); // for active screen
+  const [workoutConfig, setWorkoutConfig] = useState(null);
+  const [activeWorkout, setActiveWorkout] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
   const [streakDays, setStreakDays] = useState(4);
   const [completedWorkouts, setCompletedWorkouts] = useState(7);
   const [user, setUser] = useState(null);
 
-  // Check for saved user on mount
   useEffect(() => {
     const savedUser = localStorage.getItem("repflow_user");
     if (savedUser) {
@@ -1369,7 +1332,6 @@ export default function RepFlowApp() {
     `}</style>
   );
 
-  // Phone shell
   const shell = (content, showTabs = true, activeTab = tab) => (
     <div style={{
       width: 390, minHeight: 844,
@@ -1387,7 +1349,6 @@ export default function RepFlowApp() {
     </div>
   );
 
-  // ── Routing ──
   if (appScreen === "splash") {
     return shell(<SplashScreen onDone={() => setAppScreen("onboarding")} />, false);
   }
@@ -1434,7 +1395,6 @@ export default function RepFlowApp() {
     );
   }
 
-  // Main tabs
   const handleStartWorkout = (cfg) => { setWorkoutConfig(cfg); setAppScreen("workout-setup"); };
 
   const tabContent = {
@@ -1473,17 +1433,14 @@ export default function RepFlowApp() {
     }}>
       <style>{`
         body { margin: 0; background: #050507; }
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;700;900&family=DM+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
       `}</style>
 
-      {/* Device label */}
       <div style={{ fontFamily: FONT.body, fontSize: 12, color: "#ffffff30", letterSpacing: "0.3em" }}>
         ⚡ REPFLOW — GUIDED WORKOUT APP
       </div>
 
       {shell(tabContent[tab] || tabContent.home)}
 
-      {/* Legend */}
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
         {[
           { label: user ? `👤 ${user.name}` : "Not logged in", desc: "Your account" },
