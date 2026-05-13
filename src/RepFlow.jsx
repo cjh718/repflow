@@ -249,8 +249,252 @@ function SplashScreen({ onDone }) {
   );
 }
 
+// ─── Screen: Login ────────────────────────────────────────────────────────────
+function LoginScreen({ onLogin, onSwitchToSignup }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      // Simple validation - in real app, this would be an API call
+      if (email && password && password.length >= 6) {
+        const userData = { email, name: email.split('@')[0] };
+        localStorage.setItem("repflow_user", JSON.stringify(userData));
+        onLogin(userData);
+      } else {
+        setError("Invalid email or password (min 6 chars)");
+      }
+      setLoading(false);
+    }, 800);
+  };
+
+  return (
+    <div style={{
+      ...screen(),
+      background: `radial-gradient(ellipse at 70% 10%, ${C.accentOrange}20 0%, transparent 50%),
+                   radial-gradient(ellipse at 20% 80%, ${C.accent}12 0%, transparent 50%), ${C.bg}`,
+      display: "flex", flexDirection: "column", padding: "0 24px 40px", overflowY: "auto",
+    }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 60 }}>
+        <div style={{ animation: "fadeUp 0.5s ease forwards" }}>
+          <div style={{ fontFamily: FONT.display, fontSize: 13, letterSpacing: "0.4em", color: C.accent, marginBottom: 16, fontWeight: 700 }}>
+            ⚡ WELCOME BACK
+          </div>
+          <div style={{ fontFamily: FONT.display, fontSize: 54, fontWeight: 900, color: C.white, lineHeight: 0.95, marginBottom: 32, letterSpacing: "-1px" }}>
+            LOGIN TO<br /><span style={{ color: C.accent }}>YOUR ACCOUNT</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ animation: "fadeUp 0.5s 0.1s ease forwards", opacity: 0 }}>
+          <div style={{ marginBottom: 20 }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: "100%", padding: "18px 16px",
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: 14, color: C.white, fontFamily: FONT.body,
+                fontSize: 16, outline: "none",
+                transition: "all 0.2s ease",
+              }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: "100%", padding: "18px 16px",
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: 14, color: C.white, fontFamily: FONT.body,
+                fontSize: 16, outline: "none",
+              }}
+              required
+            />
+          </div>
+          
+          {error && (
+            <div style={{
+              color: C.red, fontSize: 13, marginBottom: 16,
+              textAlign: "center", fontFamily: FONT.body,
+            }}>{error}</div>
+          )}
+          
+          <button type="submit" disabled={loading} style={{
+            ...btnPrimary(),
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}>
+            {loading ? "LOGGING IN..." : "LOG IN →"}
+          </button>
+        </form>
+
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <span style={{ color: C.grey2, fontSize: 14 }}>Don't have an account? </span>
+          <button onClick={onSwitchToSignup} style={{
+            background: "none", border: "none", color: C.accent,
+            fontWeight: 700, cursor: "pointer", fontSize: 14,
+          }}>Sign up</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Screen: Signup ───────────────────────────────────────────────────────────
+function SignupScreen({ onSignup, onSwitchToLogin }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+    
+    setLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      const userData = { email, name: name || email.split('@')[0] };
+      localStorage.setItem("repflow_user", JSON.stringify(userData));
+      onSignup(userData);
+      setLoading(false);
+    }, 800);
+  };
+
+  return (
+    <div style={{
+      ...screen(),
+      background: `radial-gradient(ellipse at 70% 10%, ${C.accentOrange}20 0%, transparent 50%),
+                   radial-gradient(ellipse at 20% 80%, ${C.accent}12 0%, transparent 50%), ${C.bg}`,
+      display: "flex", flexDirection: "column", padding: "0 24px 40px", overflowY: "auto",
+    }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", paddingTop: 40 }}>
+        <div style={{ animation: "fadeUp 0.5s ease forwards" }}>
+          <div style={{ fontFamily: FONT.display, fontSize: 13, letterSpacing: "0.4em", color: C.accent, marginBottom: 16, fontWeight: 700 }}>
+            ⚡ JOIN THE MOVEMENT
+          </div>
+          <div style={{ fontFamily: FONT.display, fontSize: 54, fontWeight: 900, color: C.white, lineHeight: 0.95, marginBottom: 32, letterSpacing: "-1px" }}>
+            CREATE YOUR<br /><span style={{ color: C.accent }}>FREE ACCOUNT</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ animation: "fadeUp 0.5s 0.1s ease forwards", opacity: 0 }}>
+          <div style={{ marginBottom: 16 }}>
+            <input
+              type="text"
+              placeholder="Display Name (optional)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={{
+                width: "100%", padding: "18px 16px",
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: 14, color: C.white, fontFamily: FONT.body,
+                fontSize: 16, outline: "none",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: "100%", padding: "18px 16px",
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: 14, color: C.white, fontFamily: FONT.body,
+                fontSize: 16, outline: "none",
+              }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <input
+              type="password"
+              placeholder="Password (min 6 characters)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{
+                width: "100%", padding: "18px 16px",
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: 14, color: C.white, fontFamily: FONT.body,
+                fontSize: 16, outline: "none",
+              }}
+              required
+            />
+          </div>
+          <div style={{ marginBottom: 24 }}>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              style={{
+                width: "100%", padding: "18px 16px",
+                background: C.card, border: `1px solid ${C.border}`,
+                borderRadius: 14, color: C.white, fontFamily: FONT.body,
+                fontSize: 16, outline: "none",
+              }}
+              required
+            />
+          </div>
+          
+          {error && (
+            <div style={{
+              color: C.red, fontSize: 13, marginBottom: 16,
+              textAlign: "center", fontFamily: FONT.body,
+            }}>{error}</div>
+          )}
+          
+          <button type="submit" disabled={loading} style={{
+            ...btnPrimary(),
+            opacity: loading ? 0.7 : 1,
+            cursor: loading ? "not-allowed" : "pointer",
+          }}>
+            {loading ? "CREATING ACCOUNT..." : "SIGN UP →"}
+          </button>
+        </form>
+
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <span style={{ color: C.grey2, fontSize: 14 }}>Already have an account? </span>
+          <button onClick={onSwitchToLogin} style={{
+            background: "none", border: "none", color: C.accent,
+            fontWeight: 700, cursor: "pointer", fontSize: 14,
+          }}>Log in</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Screen: Onboarding ───────────────────────────────────────────────────────
-function OnboardingScreen({ onLogin, onSignup }) {
+function OnboardingScreen({ onGetStarted }) {
   return (
     <div style={{
       ...screen(),
@@ -274,7 +518,7 @@ function OnboardingScreen({ onLogin, onSignup }) {
 
         {/* Stat pills */}
         <div style={{ display: "flex", gap: 10, marginBottom: 40, animation: "fadeUp 0.5s 0.1s ease forwards", opacity: 0 }}>
-          {[["200+", "Exercises"], ["50+", "Workouts"], ["3", "Levels"]].map(([v, l]) => (
+          {[["100+", "Exercises"], ["50+", "Workouts"], ["3", "Levels"]].map(([v, l]) => (
             <div key={l} style={{
               flex: 1, padding: "14px 8px", background: C.card, borderRadius: 14,
               border: `1px solid ${C.border}`, textAlign: "center",
@@ -288,15 +532,14 @@ function OnboardingScreen({ onLogin, onSignup }) {
 
       {/* CTA */}
       <div style={{ display: "flex", flexDirection: "column", gap: 12, animation: "fadeUp 0.5s 0.2s ease forwards", opacity: 0 }}>
-        <button onClick={onSignup} style={btnPrimary()}>START FOR FREE</button>
-        <button onClick={onLogin} style={btnSecondary()}>I already have an account</button>
+        <button onClick={onGetStarted} style={btnPrimary()}>GET STARTED</button>
       </div>
     </div>
   );
 }
 
 // ─── Screen: Home Dashboard ───────────────────────────────────────────────────
-function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDays, completedWorkouts }) {
+function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDays, completedWorkouts, user, onLogout }) {
   const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
   const weekDays = ["M", "T", "W", "T", "F", "S", "S"];
   const activeDay = new Date().getDay(); // 0 = Sun
@@ -315,6 +558,11 @@ function HomeScreen({ onStartWorkout, onProfile, onPremium, isPremium, streakDay
             <div style={{ fontFamily: FONT.display, fontSize: 28, fontWeight: 900, color: C.white, letterSpacing: "-0.5px" }}>
               LET'S FLOW 🔥
             </div>
+            {user && (
+              <div style={{ fontFamily: FONT.body, fontSize: 12, color: C.accent, marginTop: 4 }}>
+                Welcome back, {user.name}!
+              </div>
+            )}
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             {!isPremium && (
@@ -884,7 +1132,7 @@ function PremiumScreen({ onBack, onUpgrade }) {
 }
 
 // ─── Screen: Profile ──────────────────────────────────────────────────────────
-function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWorkouts }) {
+function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWorkouts, user, onLogout }) {
   const badges = [
     { emoji: "🔥", label: "First Workout", earned: completedWorkouts >= 1 },
     { emoji: "💪", label: "3 in a Row", earned: streakDays >= 3 },
@@ -893,6 +1141,11 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
     { emoji: "🌟", label: "30-Day Club", earned: streakDays >= 30 },
     { emoji: "🎯", label: "Consistency", earned: completedWorkouts >= 5 },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem("repflow_user");
+    onLogout();
+  };
 
   return (
     <div style={{ ...screen(), overflowY: "auto" }}>
@@ -909,7 +1162,10 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
             boxShadow: `0 12px 40px ${C.accent}40`,
           }}>💪</div>
           <div style={{ fontFamily: FONT.display, fontSize: 26, fontWeight: 900, color: C.white }}>
-            ATHLETE
+            {user?.name?.toUpperCase() || "ATHLETE"}
+          </div>
+          <div style={{ fontFamily: FONT.body, fontSize: 13, color: C.grey2, marginTop: 4 }}>
+            {user?.email}
           </div>
           {isPremium ? (
             <Badge label="⭐ PRO MEMBER" color={C.premium} />
@@ -956,6 +1212,19 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Logout Button */}
+        <div style={{ marginTop: 28 }}>
+          <button onClick={handleLogout} style={{
+            width: "100%", padding: "16px 0",
+            background: `${C.red}15`, border: `1px solid ${C.red}40`,
+            borderRadius: 16, cursor: "pointer",
+            fontFamily: FONT.body, fontSize: 15, fontWeight: 700,
+            color: C.red, letterSpacing: "0.05em",
+          }}>
+            LOG OUT
+          </button>
         </div>
 
         {/* Settings */}
@@ -1064,13 +1333,40 @@ function iconBtn() {
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 export default function RepFlowApp() {
-  const [appScreen, setAppScreen] = useState("splash"); // splash | onboarding | main
+  const [appScreen, setAppScreen] = useState("splash"); // splash | onboarding | login | signup | main
   const [tab, setTab] = useState("home");
   const [workoutConfig, setWorkoutConfig] = useState(null); // for setup screen
   const [activeWorkout, setActiveWorkout] = useState(null); // for active screen
   const [isPremium, setIsPremium] = useState(false);
   const [streakDays, setStreakDays] = useState(4);
   const [completedWorkouts, setCompletedWorkouts] = useState(7);
+  const [user, setUser] = useState(null);
+
+  // Check for saved user on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem("repflow_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+      setAppScreen("main");
+    } else {
+      setAppScreen("splash");
+    }
+  }, []);
+
+  const handleLogin = (userData) => {
+    setUser(userData);
+    setAppScreen("main");
+  };
+
+  const handleSignup = (userData) => {
+    setUser(userData);
+    setAppScreen("main");
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setAppScreen("onboarding");
+  };
 
   const injectStyles = () => (
     <style>{`
@@ -1107,7 +1403,15 @@ export default function RepFlowApp() {
   }
 
   if (appScreen === "onboarding") {
-    return shell(<OnboardingScreen onLogin={() => setAppScreen("main")} onSignup={() => setAppScreen("main")} />, false);
+    return shell(<OnboardingScreen onGetStarted={() => setAppScreen("login")} />, false);
+  }
+
+  if (appScreen === "login") {
+    return shell(<LoginScreen onLogin={handleLogin} onSwitchToSignup={() => setAppScreen("signup")} />, false);
+  }
+
+  if (appScreen === "signup") {
+    return shell(<SignupScreen onSignup={handleSignup} onSwitchToLogin={() => setAppScreen("login")} />, false);
   }
 
   if (appScreen === "workout-setup") {
@@ -1151,6 +1455,8 @@ export default function RepFlowApp() {
       isPremium={isPremium}
       streakDays={streakDays}
       completedWorkouts={completedWorkouts}
+      user={user}
+      onLogout={handleLogout}
     />,
     workouts: <WorkoutSetupScreen
       initial={null}
@@ -1163,6 +1469,8 @@ export default function RepFlowApp() {
       onPremium={() => setAppScreen("premium")}
       streakDays={streakDays}
       completedWorkouts={completedWorkouts}
+      user={user}
+      onLogout={handleLogout}
     />,
   };
 
@@ -1188,6 +1496,7 @@ export default function RepFlowApp() {
       {/* Legend */}
       <div style={{ display: "flex", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
         {[
+          { label: user ? `👤 ${user.name}` : "Not logged in", desc: "Your account" },
           { label: "FREE MODE", desc: "Manual next exercise" },
           { label: isPremium ? "PRO ACTIVE ⭐" : "UPGRADE IN-APP", desc: isPremium ? "Auto-transition ON" : "Tap ⭐ Pro tab" },
           { label: "STREAK: " + streakDays + " DAYS 🔥", desc: "Keep training daily" },
