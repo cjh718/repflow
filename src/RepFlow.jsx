@@ -24,6 +24,9 @@ const FONT = {
   mono: "'JetBrains Mono', 'Courier New', monospace",
 };
 
+// API Configuration
+const API_URL = 'http://localhost:5001/api';
+
 // ─── Workout Data ─────────────────────────────────────────────────────────────
 const WORKOUT_DB = {
   beginner: {
@@ -122,7 +125,6 @@ function ExerciseAnimation({ exercise, isResting }) {
       boxShadow: isResting ? "none" : `0 0 40px ${C.accent}20`,
       transition: "all 0.4s ease",
     }}>
-      {/* Animated rings */}
       {!isResting && [0, 1, 2].map(i => (
         <div key={i} style={{
           position: "absolute",
@@ -260,16 +262,29 @@ function LoginScreen({ onLogin, onSwitchToSignup }) {
     setError("");
     setLoading(true);
     
-    setTimeout(() => {
-      if (email && password && password.length >= 6) {
-        const userData = { email, name: email.split('@')[0] };
-        localStorage.setItem("repflow_user", JSON.stringify(userData));
-        onLogin(userData);
-      } else {
-        setError("Invalid email or password (min 6 chars)");
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
       }
+      
+      // Store token and user data
+      localStorage.setItem('repflow_token', data.token);
+      localStorage.setItem('repflow_user', JSON.stringify(data.user));
+      
+      onLogin(data.user);
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -374,12 +389,29 @@ function SignupScreen({ onSignup, onSwitchToLogin }) {
     
     setLoading(true);
     
-    setTimeout(() => {
-      const userData = { email, name: name || email.split('@')[0] };
-      localStorage.setItem("repflow_user", JSON.stringify(userData));
-      onSignup(userData);
+    try {
+      const response = await fetch(`${API_URL}/auth/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name: name || email.split('@')[0] })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Signup failed');
+      }
+      
+      // Store token and user data
+      localStorage.setItem('repflow_token', data.token);
+      localStorage.setItem('repflow_user', JSON.stringify(data.user));
+      
+      onSignup(data.user);
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   };
 
   return (
@@ -1018,6 +1050,28 @@ function PremiumScreen({ onBack, onUpgrade }) {
     ["⌚", "Apple Watch support (coming soon)"],
   ];
 
+  const handleUpgrade = async () => {
+    const token = localStorage.getItem('repflow_token');
+    try {
+      const response = await fetch(`${API_URL}/premium/upgrade`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        onUpgrade();
+      } else {
+        alert('Upgrade failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      alert('Network error. Please try again.');
+    }
+  };
+
   return (
     <div style={{
       ...screen(), overflowY: "auto",
@@ -1074,7 +1128,7 @@ function PremiumScreen({ onBack, onUpgrade }) {
           ))}
         </div>
 
-        <button onClick={onUpgrade} style={{
+        <button onClick={handleUpgrade} style={{
           ...btnPrimary(),
           background: `linear-gradient(135deg, ${C.premium} 0%, #FF8C00 100%)`,
           color: "#000",
@@ -1102,6 +1156,7 @@ function ProfileScreen({ onBack, isPremium, onPremium, streakDays, completedWork
   ];
 
   const handleLogout = () => {
+    localStorage.removeItem("repflow_token");
     localStorage.removeItem("repflow_user");
     onLogout();
   };
@@ -1292,15 +1347,39 @@ export default function RepFlowApp() {
   const [workoutConfig, setWorkoutConfig] = useState(null);
   const [activeWorkout, setActiveWorkout] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
-  const [streakDays, setStreakDays] = useState(4);
-  const [completedWorkouts, setCompletedWorkouts] = useState(7);
+  const [streakDays, setStreakDays] = useState(0);
+  const [completedWorkouts, setCompletedWorkouts] = useState(0);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    const token = localStorage.getItem("repflow_token");
     const savedUser = localStorage.getItem("repflow_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-      setAppScreen("main");
+    
+    if (token && savedUser) {
+      // Verify token with server
+      fetch(`${API_URL}/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      .then(res => {
+        if (res.ok) {
+          const userData = JSON.parse(savedUser);
+          setUser(userData);
+          setIsPremium(userData.isPremium || false);
+          setStreakDays(userData.streakDays || 0);
+          setCompletedWorkouts(userData.completedWorkouts || 0);
+          setAppScreen("main");
+        } else {
+          // Token invalid
+          localStorage.removeItem("repflow_token");
+          localStorage.removeItem("repflow_user");
+          setAppScreen("splash");
+        }
+      })
+      .catch(() => {
+        setAppScreen("splash");
+      });
     } else {
       setAppScreen("splash");
     }
@@ -1308,17 +1387,34 @@ export default function RepFlowApp() {
 
   const handleLogin = (userData) => {
     setUser(userData);
+    setIsPremium(userData.isPremium);
+    setStreakDays(userData.streakDays);
+    setCompletedWorkouts(userData.completedWorkouts);
     setAppScreen("main");
   };
 
   const handleSignup = (userData) => {
     setUser(userData);
+    setIsPremium(userData.isPremium);
+    setStreakDays(userData.streakDays);
+    setCompletedWorkouts(userData.completedWorkouts);
     setAppScreen("main");
   };
 
   const handleLogout = () => {
     setUser(null);
     setAppScreen("onboarding");
+  };
+
+  const handleUpgrade = () => {
+    setIsPremium(true);
+    // Update user in localStorage
+    if (user) {
+      const updatedUser = { ...user, isPremium: true };
+      localStorage.setItem("repflow_user", JSON.stringify(updatedUser));
+      setUser(updatedUser);
+    }
+    setAppScreen("main");
   };
 
   const injectStyles = () => (
@@ -1380,7 +1476,17 @@ export default function RepFlowApp() {
       <ActiveWorkoutScreen
         config={activeWorkout}
         isPremium={isPremium}
-        onComplete={() => { setCompletedWorkouts(c => c + 1); setStreakDays(s => s + 1); setAppScreen("main"); }}
+        onComplete={() => { 
+          setCompletedWorkouts(c => c + 1); 
+          setStreakDays(s => s + 1);
+          // Update in localStorage
+          if (user) {
+            const updatedUser = { ...user, completedWorkouts: completedWorkouts + 1, streakDays: streakDays + 1 };
+            localStorage.setItem("repflow_user", JSON.stringify(updatedUser));
+            setUser(updatedUser);
+          }
+          setAppScreen("main"); 
+        }}
         onBack={() => setAppScreen("main")}
       />, false
     );
@@ -1390,7 +1496,7 @@ export default function RepFlowApp() {
     return shell(
       <PremiumScreen
         onBack={() => setAppScreen("main")}
-        onUpgrade={() => { setIsPremium(true); setAppScreen("main"); }}
+        onUpgrade={handleUpgrade}
       />, false
     );
   }
