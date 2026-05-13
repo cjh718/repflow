@@ -25,7 +25,7 @@ const FONT = {
 };
 
 // API Configuration
-const API_URL = 'http://localhost:5001/api';
+const API_URL = 'http://localhost:5001';
 
 // ─── Workout Data ─────────────────────────────────────────────────────────────
 const WORKOUT_DB = {
@@ -263,7 +263,7 @@ function LoginScreen({ onLogin, onSwitchToSignup }) {
     setLoading(true);
     
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -390,7 +390,7 @@ function SignupScreen({ onSignup, onSwitchToLogin }) {
     setLoading(true);
     
     try {
-      const response = await fetch(`${API_URL}/auth/signup`, {
+      const response = await fetch(`${API_URL}/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, name: name || email.split('@')[0] })
