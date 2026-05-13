@@ -25,7 +25,7 @@ const FONT = {
 };
 
 // API Configuration
-const API_URL = 'https://repflow-server.onrender.com';
+const API_URL = 'https://repflow-gmnw.onrender.com';
 
 // ─── Workout Data ─────────────────────────────────────────────────────────────
 const WORKOUT_DB = {
